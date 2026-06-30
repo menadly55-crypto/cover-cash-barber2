@@ -71,26 +71,22 @@
                     database.ref(`activationCodes/${code}`).once('value', codeSnapshot => {
                         let codeData = codeSnapshot.val();
 
-                        if (codeData && codeData.status === "unused") {
+                        // التحقق هنا تم تعديله ليقبل الكود حتى لو حالته أي شيء طالما الكود موجود وصحيح
+                        if (codeData) {
                             database.ref(`barbersUsers/${user}`).set({
                                 username: user,
                                 password: pass,
                                 activatedWith: code,
                                 signupDate: new Date().toISOString()
                             }).then(() => {
-                                database.ref(`activationCodes/${code}`).update({
-                                    status: "used",
-                                    usedBy: user,
-                                    usedDate: new Date().toISOString()
-                                });
-
+                                // تم إلغاء تحويل الكود إلى used لكي يظل صالحاً للجميع دائمًا
                                 sessionStorage.setItem("isLoggedIn", "true");
                                 localStorage.setItem("barberUsername", user);
                                 alert("🎉 تم تفعيل حساب صالونك بنجاح!");
                                 window.location.href = "admin.html";
                             });
                         } else {
-                            alert("❌ كود التفعيل غير صحيح أو مستخدم من قبل!");
+                            alert("❌ كود التفعيل غير صحيح!");
                         }
                     });
                 }
