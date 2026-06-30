@@ -68,27 +68,22 @@
                         return;
                     }
 
-                    database.ref(`activationCodes/${code}`).once('value', codeSnapshot => {
-                        let codeData = codeSnapshot.val();
-
-                        // التحقق هنا تم تعديله ليقبل الكود حتى لو حالته أي شيء طالما الكود موجود وصحيح
-                        if (codeData) {
-                            database.ref(`barbersUsers/${user}`).set({
-                                username: user,
-                                password: pass,
-                                activatedWith: code,
-                                signupDate: new Date().toISOString()
-                            }).then(() => {
-                                // تم إلغاء تحويل الكود إلى used لكي يظل صالحاً للجميع دائمًا
-                                sessionStorage.setItem("isLoggedIn", "true");
-                                localStorage.setItem("barberUsername", user);
-                                alert("🎉 تم تفعيل حساب صالونك بنجاح!");
-                                window.location.href = "admin.html";
-                            });
-                        } else {
-                            alert("❌ كود التفعيل غير صحيح!");
-                        }
-                    });
+                    // التعديل السحري: لو الكود المكتوب هو كودك الرئيسي، هيسجل الحساب فوراً للجميع بدون قيود
+                    if (code === "MINA-COVER-CASH-2026") {
+                        database.ref(`barbersUsers/${user}`).set({
+                            username: user,
+                            password: pass,
+                            activatedWith: code,
+                            signupDate: new Date().toISOString()
+                        }).then(() => {
+                            sessionStorage.setItem("isLoggedIn", "true");
+                            localStorage.setItem("barberUsername", user);
+                            alert("🎉 تم تفعيل حساب صالونك بنجاح!");
+                            window.location.href = "admin.html";
+                        });
+                    } else {
+                        alert("❌ كود التفعيل غير صحيح!");
+                    }
                 }
             });
         }
