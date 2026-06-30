@@ -200,13 +200,9 @@
 
         function copyBarberLink() {
             let currentUrl = window.location.href;
-            let fullLink = "";
-
-            if (currentUrl.includes("github.io")) {
-                fullLink = `https://menadly55-crypto.github.io/cover-cash-barber/client.html?barber=${currentBarber}`;
-            } else {
-                fullLink = currentUrl.replace("admin.html", `client.html?barber=${currentBarber}`);
-            }
+            
+            // التعديل التلقائي الذكي: بيستبدل admin.html بـ client.html أوتوماتيك ويضيف اسم الحلاق الحالي
+            let fullLink = currentUrl.replace("admin.html", "client.html") + `?barber=${currentBarber}`;
 
             navigator.clipboard.writeText(fullLink).then(() => {
                 let msg = document.getElementById("copyMessage");
