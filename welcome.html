@@ -18,6 +18,10 @@
 
         <hr class="divider">
 
+        <div id="reminderBanner" style="display: none; background: #d4af37; color: #121212; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center;">
+            📢 يا غالي عدا 15 يوم على آخر حلاقة ليك.. مستنيينك تنورنا في الصالون عشان تجدد ستايلك وتزود نقطة في كارتك! ✂️
+        </div>
+
         <div class="client-info">
             <p><strong>الاسم:</strong> <span id="welcomeName">جاري التحميل...</span></p>
             <p><strong>رقم الهاتف:</strong> <span id="welcomePhone">جاري التحميل...</span></p>
@@ -64,6 +68,11 @@
             window.location.href = "client.html";
         }
 
+        // طلب إذن الإشعارات من الزبون أول ما يفتح الصفحة
+        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+
         database.ref(`barbers/${barberId}`).on('value', snapshot => {
             let data = snapshot.val() || {};
             let pendingClients = data.pendingClients || {};
@@ -83,12 +92,38 @@
                     document.getElementById("checkInBtn").style.display = "block";
                     document.getElementById("sessionMsg").style.display = "none";
                 }
+
+                // 🚨 حساب الـ 15 يوم وإرسال إشعار التذكير
+                if (currentClient.lastVisitDate) {
+                    let lastVisit = new Date(currentClient.lastVisitDate);
+                    let today = new Date();
+                    let differenceInTime = today.getTime() - lastVisit.getTime();
+                    let differenceInDays = Math.floor(differenceInTime / (1000 * 3600 * 24));
+
+                    // لو عدى 15 يوم أو أكتر
+                    if (differenceInDays >= 15) {
+                        // 1. إظهار البنر الشيك جوة الصفحة
+                        document.getElementById("reminderBanner").style.display = "block";
+
+                        // 2. إرسال إشعار للنظام لو العميل مدي صلاحية
+                        if (Notification.permission === "granted") {
+                            new Notification("صالون الحلاقة ✂️", {
+                                body: "يا غالي عدا 15 يوم على آخر حلاقة ليك.. مستنيينك تنورنا في الصالون!",
+                                icon: "https://menadly55-crypto.github.io/cover-cash-barber2/favicon.ico" // هيقرا الفيف أيكون لو مرفوعة
+                            });
+                        }
+                    } else {
+                        document.getElementById("reminderBanner").style.display = "none";
+                    }
+                }
+
             } else {
                 currentClient = pendingClients[currentPhone] || { name: "زائر جديد", phone: currentPhone, visits: 0 };
                 document.getElementById("cardStatus").innerText = "في انتظار موافقة الحلاق والدفع ⏳";
                 document.getElementById("cardStatus").style.backgroundColor = "#dc3545";
                 document.getElementById("checkInBtn").style.display = "none";
                 document.getElementById("sessionMsg").style.display = "none";
+                document.getElementById("reminderBanner").style.display = "none";
             }
 
             document.getElementById("welcomeName").innerText = currentClient.name;
@@ -96,7 +131,6 @@
 
             let currentVisits = parseInt(currentClient.visits || 0);
             for (let i = 1; i <= 8; i++) {
-                let slot = document.getElementById("slot-\" + i");
                 let cleanSlot = document.getElementById(`slot-${i}`);
                 if(cleanSlot){
                     cleanSlot.classList.remove("active");
@@ -108,7 +142,6 @@
         });
 
         function requestVisit() {
-            // التعديل هنا لـ update بدلاً من set لحماية بيانات العميل من المسح
             database.ref(`barbers/${barberId}/approvedClients/${currentPhone}`).update({
                 activeSession: true
             }).then(() => {
