@@ -18,6 +18,7 @@
 
         <hr class="divider">
 
+        <!-- بنر تذكير منبثق داخل الصفحة للزبون لو عدا 15 يوم -->
         <div id="reminderBanner" style="display: none; background: #d4af37; color: #121212; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center;">
             📢 يا غالي عدا 15 يوم على آخر حلاقة ليك.. مستنيينك تنورنا في الصالون عشان تجدد ستايلك وتزود نقطة في كارتك! ✂️
         </div>
@@ -32,6 +33,7 @@
             <p id="sessionMsg" style="color: #ffc107; font-weight: bold; display: none;">⏳ تم إرسال طلبك! الحلاق يسجل حلاقتك الآن...</p>
         </div>
 
+        <!-- شبكة المربعات الثمانية -->
         <div class="slots-grid">
             <div class="slot" id="slot-1">1</div>
             <div class="slot" id="slot-2">2</div>
@@ -68,10 +70,15 @@
             window.location.href = "client.html";
         }
 
-        // طلب إذن الإشعارات من الزبون أول ما يفتح الصفحة
-        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-            Notification.requestPermission();
+        // دالة لطلب الإذن بالإشعارات عند تفاعل العميل (تضمن ظهورها على الفون)
+        function askNotificationPermission() {
+            if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
         }
+
+        // تفعيل طلب الإذن بمجرد أن يلمس العميل أي مكان في الشاشة
+        document.body.addEventListener('click', askNotificationPermission, { once: true });
 
         database.ref(`barbers/${barberId}`).on('value', snapshot => {
             let data = snapshot.val() || {};
@@ -102,14 +109,14 @@
 
                     // لو عدى 15 يوم أو أكتر
                     if (differenceInDays >= 15) {
-                        // 1. إظهار البنر الشيك جوة الصفحة
+                        // 1. إظهار البنر الشيك جوة الصفحة (مضمون 100%)
                         document.getElementById("reminderBanner").style.display = "block";
 
-                        // 2. إرسال إشعار للنظام لو العميل مدي صلاحية
-                        if (Notification.permission === "granted") {
+                        // 2. إرسال إشعار للنظام
+                        if ("Notification" in window && Notification.permission === "granted") {
                             new Notification("صالون الحلاقة ✂️", {
                                 body: "يا غالي عدا 15 يوم على آخر حلاقة ليك.. مستنيينك تنورنا في الصالون!",
-                                icon: "https://menadly55-crypto.github.io/cover-cash-barber2/favicon.ico" // هيقرا الفيف أيكون لو مرفوعة
+                                icon: "https://menadly55-crypto.github.io/cover-cash-barber2/favicon.ico"
                             });
                         }
                     } else {
@@ -142,6 +149,7 @@
         });
 
         function requestVisit() {
+            askNotificationPermission(); // نطلب الإذن هنا أيضاً كخطوة تأكيدية
             database.ref(`barbers/${barberId}/approvedClients/${currentPhone}`).update({
                 activeSession: true
             }).then(() => {
