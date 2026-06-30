@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كارت العضوية الرقمي 💳</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="card animate-card">
+        <h1>كارت العضوية الرقمي لصالون <span id="barberNameText" style="color: #d4af37;">...</span> ✂️</h1>
+        <h2>انضم لبرنامج المكافآت الذكي</h2>
+        
+        <hr class="divider">
+
+        <div class="features-list" style="text-align: right; margin: 15px 0;">
+            <p>✅ احلق 7 حلقات واحصل على **الثامنة مجاناً**!</p>
+            <p>✅ كارت رقمي على موبايلك تتابع منه زياراتك.</p>
+        </div>
+
+        <div class="price" style="color: #28a745; font-weight: bold; margin-bottom: 20px;">💰 رسوم الاشتراك وتفعيل الكارت: 50 جنيه</div>
+
+        <input id="clientName" type="text" placeholder="الاسم بالكامل">
+        <input id="clientPhone" type="tel" placeholder="رقم الهاتف (موبايل)">
+        <br><br>
+
+        <button onclick="registerClient()" class="btn-main" style="width: 100%; padding: 12px; background-color: #d4af37; color: #121212; font-weight: bold; border: none; border-radius: 5px; cursor: pointer;">اضغط هنا للاشتراك والتفعيل 🚀</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBaqOvkSo08ym2_bfw8LYjzEBr3_fgo5FY",
+          authDomain: "cover-cash-barber.firebaseapp.com",
+          databaseURL: "https://cover-cash-barber-default-rtdb.firebaseio.com/",
+          projectId: "cover-cash-barber",
+          storageBucket: "cover-cash-barber.firebasestorage.app",
+          messagingSenderId: "753180043275",
+          appId: "1:753180043275:web:0d08612be42a5daa3e7f0e",
+          measurementId: "G-KHQ9L8JPWK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // قراءة اسم الحلاق من الرابط
+        let urlParams = new URLSearchParams(window.location.search);
+        let barberId = urlParams.get('barber') || "default_barber";
+        document.getElementById("barberNameText").innerText = barberId;
+
+        function registerClient() {
+            let name = document.getElementById("clientName").value.trim();
+            let phone = document.getElementById("clientPhone").value.trim();
+
+            if (name === "" || phone === "") {
+                alert("من فضلك أدخل الاسم ورقم الهاتف!");
+                return;
+            }
+
+            // ربط العميل بـ اسم الحلاق اللي جاي في الرابط
+            database.ref(`barbers/${barberId}/pendingClients/${phone}`).set({
+                name: name,
+                phone: phone,
+                visits: 0,
+                status: "pending"
+            }).then(() => {
+                localStorage.setItem("currentClientPhone", phone);
+                localStorage.setItem("currentClientBarber", barberId);
+                
+                alert("✅ تم إرسال طلبك بنجاح! برجاء دفع الـ 50 جنيه للحلاق لتفعيل كارتك فوراً.");
+                window.location.href = "welcome.html"; // يروح لصفحة الكارت يتابع حالته
+            });
+        }
+    </script>
+</body>
+</html>

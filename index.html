@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة صالونات الحلاقة 🔐</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="card">
+        <h1>لوحة تحكم صالونك ✂️</h1>
+        <p class="note">سجل دخولك أو فعّل حسابك الجديد</p>
+        <hr class="divider">
+
+        <input id="username" type="text" placeholder="اسم المستخدم (بالإنجليزي وبدون مسافات)">
+        <input id="password" type="password" placeholder="كلمة المرور">
+        
+        <div style="margin-top: 15px; padding: 15px; background: #252525; border-radius: 5px; border: 1px dashed #d4af37;">
+            <p style="font-size: 13px; margin: 0 0 8px 0; color: #d4af37; font-weight: bold;">⚠️ للاشتراك وتفعيل الحساب لأول مرة فقط:</p>
+            <input id="activationCode" type="text" placeholder="أدخل كود التفعيل الممنوح لك">
+        </div>
+        <br>
+
+        <button onclick="handleLogin()">دخول لوحة التحكم 🚀</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBaqOvkSo08ym2_bfw8LYjzEBr3_fgo5FY",
+          authDomain: "cover-cash-barber.firebaseapp.com",
+          databaseURL: "https://cover-cash-barber-default-rtdb.firebaseio.com/",
+          projectId: "cover-cash-barber",
+          storageBucket: "cover-cash-barber.firebasestorage.app",
+          messagingSenderId: "753180043275",
+          appId: "1:753180043275:web:0d08612be42a5daa3e7f0e",
+          measurementId: "G-KHQ9L8JPWK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function handleLogin() {
+            let user = document.getElementById("username").value.trim().toLowerCase();
+            let pass = document.getElementById("password").value.trim();
+            let code = document.getElementById("activationCode").value.trim();
+
+            if (user === "" || pass === "") {
+                alert("من فضلك أدخل اسم المستخدم وكلمة المرور!");
+                return;
+            }
+
+            database.ref(`barbersUsers/${user}`).once('value', snapshot => {
+                let barberAccount = snapshot.val();
+
+                if (barberAccount) {
+                    if (barberAccount.password === pass) {
+                        sessionStorage.setItem("isLoggedIn", "true");
+                        localStorage.setItem("barberUsername", user);
+                        window.location.href = "admin.html";
+                    } else {
+                        alert("❌ كلمة المرور غير صحيحة!");
+                    }
+                } else {
+                    if (code === "") {
+                        alert("❌ هذا الحساب غير مسجل. إذا كنت حلاقاً جديداً، يرجى إدخال كود التفعيل للاشتراك!");
+                        return;
+                    }
+
+                    database.ref(`activationCodes/${code}`).once('value', codeSnapshot => {
+                        let codeData = codeSnapshot.val();
+
+                        if (codeData && codeData.status === "unused") {
+                            database.ref(`barbersUsers/${user}`).set({
+                                username: user,
+                                password: pass,
+                                activatedWith: code,
+                                signupDate: new Date().toISOString()
+                            }).then(() => {
+                                database.ref(`activationCodes/${code}`).update({
+                                    status: "used",
+                                    usedBy: user,
+                                    usedDate: new Date().toISOString()
+                                });
+
+                                sessionStorage.setItem("isLoggedIn", "true");
+                                localStorage.setItem("barberUsername", user);
+                                alert("🎉 تم تفعيل حساب صالونك بنجاح!");
+                                window.location.href = "admin.html";
+                            });
+                        } else {
+                            alert("❌ كود التفعيل غير صحيح أو مستخدم من قبل!");
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

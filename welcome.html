@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كارت العضوية الرقمي</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="card animate-card">
+        <div class="card-header">
+            <h2>Barber Loyalty Card ✂️</h2>
+            <span id="cardStatus" class="badge" style="background-color: #dc3545;">في انتظار التفعيل ⏳</span>
+        </div>
+
+        <hr class="divider">
+
+        <div class="client-info">
+            <p><strong>الاسم:</strong> <span id="welcomeName">جاري التحميل...</span></p>
+            <p><strong>رقم الهاتف:</strong> <span id="welcomePhone">جاري التحميل...</span></p>
+        </div>
+
+        <div style="margin: 15px 0; text-align: center;">
+            <button id="checkInBtn" onclick="requestVisit()" style="background-color: #ffc107 !important; color: #000; font-weight: bold; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; display: none;">📍 أنا في الصالون الآن</button>
+            <p id="sessionMsg" style="color: #ffc107; font-weight: bold; display: none;">⏳ تم إرسال طلبك! الحلاق يسجل حلاقتك الآن...</p>
+        </div>
+
+        <div class="slots-grid">
+            <div class="slot" id="slot-1">1</div>
+            <div class="slot" id="slot-2">2</div>
+            <div class="slot" id="slot-3">3</div>
+            <div class="slot" id="slot-4">4</div>
+            <div class="slot" id="slot-5">5</div>
+            <div class="slot" id="slot-6">6</div>
+            <div class="slot" id="slot-7">7</div>
+            <div class="slot" id="slot-8" style="border-color: #28a745; color: #28a745;">🎁</div>
+        </div>
+
+        <p class="note">💡 احلق 7 مرات واحصل على المرة الثامنة مجاناً بالكامل!</p>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyBaqOvkSo08ym2_bfw8LYjzEBr3_fgo5FY",
+          authDomain: "cover-cash-barber.firebaseapp.com",
+          databaseURL: "https://cover-cash-barber-default-rtdb.firebaseio.com/",
+          projectId: "cover-cash-barber",
+          storageBucket: "cover-cash-barber.firebasestorage.app",
+          messagingSenderId: "753180043275",
+          appId: "1:753180043275:web:0d08612be42a5daa3e7f0e",
+          measurementId: "G-KHQ9L8JPWK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let currentPhone = localStorage.getItem("currentClientPhone");
+        let barberId = localStorage.getItem("currentClientBarber") || "default_barber";
+
+        if (!currentPhone) {
+            alert("لم يتم العثور على بيانات العضوية!");
+            window.location.href = "client.html";
+        }
+
+        database.ref(`barbers/${barberId}`).on('value', snapshot => {
+            let data = snapshot.val() || {};
+            let pendingClients = data.pendingClients || {};
+            let approvedClients = data.approvedClients || {};
+
+            let currentClient = null;
+
+            if (approvedClients[currentPhone]) {
+                currentClient = approvedClients[currentPhone];
+                document.getElementById("cardStatus").innerText = "حساب مفعّل ✅";
+                document.getElementById("cardStatus").style.backgroundColor = "#28a745";
+                
+                if (currentClient.activeSession === true) {
+                    document.getElementById("checkInBtn").style.display = "none";
+                    document.getElementById("sessionMsg").style.display = "block";
+                } else {
+                    document.getElementById("checkInBtn").style.display = "block";
+                    document.getElementById("sessionMsg").style.display = "none";
+                }
+            } else {
+                currentClient = pendingClients[currentPhone] || { name: "زائر جديد", phone: currentPhone, visits: 0 };
+                document.getElementById("cardStatus").innerText = "في انتظار موافقة الحلاق والدفع ⏳";
+                document.getElementById("cardStatus").style.backgroundColor = "#dc3545";
+                document.getElementById("checkInBtn").style.display = "none";
+                document.getElementById("sessionMsg").style.display = "none";
+            }
+
+            document.getElementById("welcomeName").innerText = currentClient.name;
+            document.getElementById("welcomePhone").innerText = currentClient.phone;
+
+            let currentVisits = parseInt(currentClient.visits || 0);
+            for (let i = 1; i <= 8; i++) {
+                let slot = document.getElementById("slot-\" + i");
+                let cleanSlot = document.getElementById(`slot-${i}`);
+                if(cleanSlot){
+                    cleanSlot.classList.remove("active");
+                    if (i <= currentVisits) {
+                        cleanSlot.classList.add("active");
+                    }
+                }
+            }
+        });
+
+        function requestVisit() {
+            // التعديل هنا لـ update بدلاً من set لحماية بيانات العميل من المسح
+            database.ref(`barbers/${barberId}/approvedClients/${currentPhone}`).update({
+                activeSession: true
+            }).then(() => {
+                alert("🚀 تم إرسال طلبك للحلاق بنجاح!");
+            }).catch(err => {
+                alert("خطأ: " + err.message);
+            });
+        }
+    </script>
+</body>
+</html>

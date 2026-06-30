@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الصالون ✂️</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="card" style="max-width: 800px; width: 100%;">
+        <h2>لوحة تحكم الحلاق السحابية 💻 (<span id="barberNameTitle" style="color:#d4af37;"></span>)</h2>
+        
+        <div style="background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #dc3545;">
+            <h3 style="color: #dc3545; margin-top: 0;">⏳ طلبات عضوية جديدة (في انتظار دفع 50ج)</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>الهاتف</th>
+                        <th>التحكم</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ffc107;">
+            <h3 style="color: #ffc107; margin-top: 0;">📍 عملاء في الصالون الآن (طلبوا زيارة)</h3>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>الزيارات الحالية</th>
+                        <th>التحكم</th>
+                    </tr>
+                </thead>
+                <tbody id="activeSessionTableBody"></tbody>
+            </table>
+        </div>
+
+        <hr class="divider">
+
+        <h3>📋 كل زبائن الصالون المفعّلين</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>الاسم</th>
+                    <th>رقم الهاتف</th>
+                    <th>الزيارات</th>
+                    <th>التحكم</th>
+                </tr>
+            </thead>
+            <tbody id="clientsTableBody"></tbody>
+        </table>
+
+        <hr class="divider">
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button onclick="copyBarberLink()" style="background-color: #d4af37 !important; color: #121212; font-weight: bold; padding: 10px 20px;">
+                📋 نسخ رابط صالوني للزبائن (الـ 50 جنيه)
+            </button>
+            <p id="copyMessage" style="color: #28a745; font-size: 14px; margin-top: 8px; display: none;">✅ تم نسخ الرابط المخصص لصالونك بنجاح!</p>
+        </div>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "index.html"; 
+        }
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBaqOvkSo08ym2_bfw8LYjzEBr3_fgo5FY",
+          authDomain: "cover-cash-barber.firebaseapp.com",
+          databaseURL: "https://cover-cash-barber-default-rtdb.firebaseio.com/",
+          projectId: "cover-cash-barber",
+          storageBucket: "cover-cash-barber.firebasestorage.app",
+          messagingSenderId: "753180043275",
+          appId: "1:753180043275:web:0d08612be42a5daa3e7f0e",
+          measurementId: "G-KHQ9L8JPWK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let currentBarber = localStorage.getItem("barberUsername") || "default_barber";
+        document.getElementById("barberNameTitle").innerText = currentBarber;
+
+        database.ref(`barbers/${currentBarber}`).on('value', snapshot => {
+            let data = snapshot.val() || {};
+            let pendingClients = data.pendingClients || {};
+            let approvedClients = data.approvedClients || {};
+
+            // 1. عرض طلبات التفعيل المعلقة
+            let pendingBody = document.getElementById("pendingTableBody");
+            pendingBody.innerHTML = "";
+            let hasPending = false;
+            for (let phone in pendingClients) {
+                hasPending = true;
+                let client = pendingClients[phone];
+                pendingBody.innerHTML += `
+                    <tr>
+                        <td>${client.name}</td>
+                        <td>${client.phone}</td>
+                        <td>
+                            <button onclick="approveClient('${phone}')" class="btn-visit" style="background-color:#28a745 !important;">تفعيل وموافقة (قبضت) 💰</button>
+                        </td>
+                    </tr>`;
+            }
+            if(!hasPending) pendingBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">لا توجد طلبات معلقة حالياً.</td></tr>`;
+
+            // 2. عرض المتواجدين والجدول العام
+            let activeBody = document.getElementById("activeSessionTableBody");
+            let mainBody = document.getElementById("clientsTableBody");
+            activeBody.innerHTML = "";
+            mainBody.innerHTML = "";
+            
+            let hasActive = false;
+            let hasApproved = false;
+
+            for (let phone in approvedClients) {
+                hasApproved = true;
+                let client = approvedClients[phone];
+
+                let clientRowHtml = `
+                    <tr>
+                        <td>${client.name}</td>
+                        <td>${client.phone || ''}</td>
+                        <td><span class="badge" style="background-color: ${client.visits == 8 ? '#28a745' : '#d4af37'}">${client.visits}</span> / 8</td>
+                        <td>
+                            <button onclick="addVisit('${phone}')" class="btn-visit">+ زيارة</button>
+                            <button onclick="resetCard('${phone}')" class="btn-reset" style="background-color:#dc3545 !important;">تصفير</button>
+                        </td>
+                    </tr>`;
+
+                if(client.activeSession === true) {
+                    hasActive = true;
+                    activeBody.innerHTML += `
+                        <tr>
+                            <td><strong>${client.name}</strong></td>
+                            <td><span class="badge">${client.visits}</span> / 8</td>
+                            <td>
+                                <button onclick="addVisit('${phone}')" class="btn-visit" style="background-color:#ffc107 !important; color:#000 !important; font-weight:bold;">+ تسجيل الحلاقة وإنهاء الجلسة ✂️</button>
+                            </td>
+                        </tr>`;
+                }
+
+                mainBody.innerHTML += clientRowHtml;
+            }
+
+            if(!hasActive) activeBody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">لا يوجد زبائن ضغطوا "أنا في الصالون" حالياً.</td></tr>`;
+            if(!hasApproved) mainBody.innerHTML = `<tr><td colspan="4" style="text-align:center;">لا يوجد عملاء مفعّلين بعد.</td></tr>`;
+        });
+
+        function approveClient(phone) {
+            database.ref(`barbers/${currentBarber}/pendingClients/${phone}`).once('value', snapshot => {
+                let clientData = snapshot.val();
+                if(clientData) {
+                    clientData.status = "approved";
+                    database.ref(`barbers/${currentBarber}/approvedClients/${phone}`).set(clientData).then(() => {
+                        database.ref(`barbers/${currentBarber}/pendingClients/${phone}`).remove();
+                        alert("✅ تم تفعيل العضوية بنجاح ونقله لقائمة زبائنك!");
+                    });
+                }
+            });
+        }
+
+        function addVisit(phone) {
+            database.ref(`barbers/${currentBarber}/approvedClients/${phone}`).once('value', snapshot => {
+                let client = snapshot.val();
+                if (client.visits < 8) {
+                    let newVisits = (client.visits || 0) + 1;
+                    let updates = {
+                        visits: newVisits,
+                        lastVisitDate: new Date().toISOString(),
+                        activeSession: false 
+                    };
+                    
+                    database.ref(`barbers/${currentBarber}/approvedClients/${phone}`).update(updates);
+
+                    if(newVisits === 8) {
+                        alert(`🎉 مبروك! العميل (${client.name}) وصل للزيارة الثامنة واستحق الحلاقة المجانية!`);
+                    }
+                } else {
+                    alert("العميل استهلك الـ 8 زيارات بالفعل، يجب تصفير الكارت.");
+                }
+            });
+        }
+
+        function resetCard(phone) {
+            if(confirm("هل أنت متأكد من تصفير كارت العميل؟")) {
+                database.ref(`barbers/${currentBarber}/approvedClients/${phone}`).update({
+                    visits: 0,
+                    lastVisitDate: null,
+                    activeSession: false
+                });
+            }
+        }
+
+        function copyBarberLink() {
+            let currentUrl = window.location.href;
+            let fullLink = "";
+
+            if (currentUrl.includes("github.io")) {
+                fullLink = `https://menadly55-crypto.github.io/cover-cash-barber/client.html?barber=${currentBarber}`;
+            } else {
+                fullLink = currentUrl.replace("admin.html", `client.html?barber=${currentBarber}`);
+            }
+
+            navigator.clipboard.writeText(fullLink).then(() => {
+                let msg = document.getElementById("copyMessage");
+                msg.style.display = "block";
+                setTimeout(() => { msg.style.display = "none"; }, 3000); 
+            });
+        }
+    </script>
+</body>
+</html>

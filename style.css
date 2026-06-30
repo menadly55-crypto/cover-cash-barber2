@@ -1,0 +1,238 @@
+/* التنسيقات العامة للموقع */
+body {
+    background-color: #111;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* تصميم الكارت الأساسي الموحد */
+.card {
+    background-color: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 20px;
+    padding: 30px;
+    width: 100%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 40px rgba(212, 175, 55, 0.06);
+    box-sizing: border-box;
+}
+
+h1 {
+    font-size: 28px;
+    margin-top: 0;
+    line-height: 1.4;
+}
+
+h2 {
+    font-size: 18px;
+    color: #aaa;
+    font-weight: normal;
+    margin-bottom: 20px;
+}
+
+.divider {
+    border: 0;
+    border-top: 1px solid #333;
+    margin: 20px 0;
+}
+
+/* قائمة المميزات */
+.features-list {
+    text-align: right;
+    margin: 20px 0;
+}
+
+.features {
+    font-size: 15px;
+    margin: 12px 0;
+    color: #ddd;
+    line-height: 1.5;
+}
+
+/* سعر الاشتراك */
+.price {
+    background-color: #252525;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: bold;
+    color: #ffc107;
+    margin: 20px 0;
+    font-size: 15px;
+    border: 1px dashed #444;
+}
+
+/* حاوية الأزرار لتنظيم المساحة */
+.buttons-container {
+    margin-top: 25px;
+}
+
+/* الأزرار الأساسية */
+.btn-main {
+    display: block;
+    background-color: #d4af37;
+    color: #000;
+    padding: 14px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+    margin-bottom: 15px;
+}
+
+.btn-main:hover {
+    transform: scale(1.02);
+    background-color: #ffc107;
+}
+
+.btn-admin-link {
+    display: inline-block;
+    color: #666;
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.3s;
+}
+
+.btn-admin-link:hover {
+    color: #ffc107;
+}
+
+/* تنسيقات المدخلات (صفحة التسجيل) */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background-color: #252525;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    box-sizing: border-box;
+    text-align: right;
+}
+
+input:focus {
+    border-color: #d4af37;
+    outline: none;
+}
+
+button {
+    width: 100%;
+    background-color: #d4af37;
+    color: #000;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #ffc107;
+}
+
+/* تنسيقات كارت العضوية المظلل (welcome.html) */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.badge {
+    background-color: #28a745;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.client-info p {
+    font-size: 16px;
+    margin: 8px 0;
+    text-align: right;
+}
+
+.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.slot {
+    background-color: #252525;
+    border: 2px solid #444;
+    color: #666;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.slot.active {
+    background-color: #d4af37;
+    border-color: #ffc107;
+    color: #000;
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+}
+
+.note {
+    font-size: 13px;
+    color: #888;
+}
+
+/* لوحة تحكم الحلاق (admin.html) */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    color: #fff;
+    text-align: right;
+    font-size: 14px;
+}
+
+.admin-table th, .admin-table td {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.admin-table th {
+    background-color: #252525;
+    color: #ffc107;
+}
+
+.btn-visit {
+    background-color: #28a745 !important;
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+    color: white !important;
+    width: auto !important;
+    display: inline-block !important;
+    margin-left: 3px;
+}
+
+.btn-reset {
+    background-color: #dc3545 !important;
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+    color: white !important;
+    width: auto !important;
+    display: inline-block !important;
+}
